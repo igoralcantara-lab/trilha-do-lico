@@ -1,0 +1,24 @@
+  times:["mul","div","double","half"],
+  find:["next","seq","compare","tens","ones","parity","story","half"],
+  seq:["seq"]
+};
+const NAMES = ["Lia","Leo","Ana","Davi","Bia","Caio"];
+const ITEMS = ["balas","figurinhas","lápis","maçãs","carrinhos","adesivos"];
+const state = { phase:"home", mode:"mix", round:[], index:0, score:0, combo:0, bestCombo:0, lives:3, stars:0, pick:null, mood:"idle", gain:0, best:0, music:true, timer:0 };
+let save = { best:0, music:true };
+try { const raw = JSON.parse(localStorage.getItem(SAVE_KEY) || ""); if (raw && typeof raw === "object") save = { best: Number(raw.best)||0, music: raw.music !== false }; } catch (e) {}
+state.best = save.best; state.music = save.music;
+const ri = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+const pick = (list) => list[Math.floor(Math.random()*list.length)];
+function shuffle(list){ const next=[...list]; for (let i=next.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [next[i],next[j]]=[next[j],next[i]]; } return next; }
+const band = (i) => i<3?0:i<7?1:2;
+function q(label,prompt,answer,explain,options){
+  const unique=[...new Set(options)];
+  if (!unique.includes(answer)) unique.push(answer);
+  return { label, prompt, answer, explain, options: shuffle(unique) };
+}
+function numberChoices(answer,total,spread){
+  total = total || 4; spread = spread || 6;
+  const set=new Set([answer]); let guard=0;
+  while (set.size<total && guard<50){ guard++; const value=answer+ri(1,spread)*(Math.random()<.5?-1:1); if (value>=0 && value!==answer) set.add(value); }
+  let extra=1; while (set.size<total){ const value=answer+extra; if (value>=0) set.add(value); extra++; }
