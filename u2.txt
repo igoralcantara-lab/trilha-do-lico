@@ -1,0 +1,24 @@
+.score{font-size:3.2rem;font-weight:700;color:var(--coral);margin-top:.4rem}
+.act{width:100%;min-height:3.5rem;border-radius:1.4rem;font-size:1.1rem;font-weight:700;margin-top:.8rem}
+.act.primary{background:var(--coral);color:var(--coral-ink)}
+.act.ghost{background:var(--card);border:1px solid var(--line)}
+.hop{animation:hop .55s ease}
+.wobble{animation:wobble .45s ease}
+@keyframes hop{40%{transform:translateY(-10px)}}
+@keyframes wobble{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+const SAVE_KEY = "lico-trilha-v1";
+const MODES = [
+  ["mix","Trilha mista","Um pouco de tudo","✦"],
+  ["seq","Sequências","A regra e o que vem","123"],
+  ["sum","Somar e tirar","Mais, menos e completar","+"],
+  ["times","Vezes e partir","Tabuada bem fácil","×"],
+  ["find","Descobrir","Sequências e ideias","?"]
+];
+const POOLS = {
+  mix:["add","sub","mul","div","next","seq","double","half","tens","story","missing","compare","parity"],
+  sum:["add","sub","missing","double"],
