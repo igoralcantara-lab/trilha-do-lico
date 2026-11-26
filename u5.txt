@@ -1,0 +1,24 @@
+  const terms=[0,1,2,3].map(i=>start+i*(up?step:-step));
+  if(style==="next"){ const answer=terms[3]; return q(up?"Sequência":"Para trás",terms.slice(0,3).join(", ")+", ?",String(answer),up?"Sobe de "+step+" em "+step+".":"Desce de "+step+" em "+step+".",nearChoices(answer,[answer+(up?step:-step),answer+1,answer-1])); }
+  if(style==="hole"){ const slot=ri(1,2); const answer=terms[slot]; return q("Falta um",terms.map((t,i)=>i===slot?"?":t).join(", "),String(answer),up?"Sobe de "+step+" em "+step+". Falta "+answer+".":"Desce de "+step+" em "+step+". Falta "+answer+".",nearChoices(answer,[answer+step,answer-step,answer+1])); }
+  if(style==="rule") return q("Regra",terms.join(", "),ruleText(step,up),up?"A regra é subir de "+step+" em "+step+".":"A regra é descer de "+step+" em "+step+".",ruleOptions(step,up));
+  const slot=ri(1,3); let odd=terms[slot]+(Math.random()<.5?1:step); let guard=0; while((terms.includes(odd)||odd<0)&&guard<12){ odd++; guard++; }
+  const shown=terms.map((t,i)=>i===slot?odd:t);
+  return q("Quem sai?",shown.join(", "),String(odd),up?"Sobe de "+step+" em "+step+". O "+odd+" sai.":"Desce de "+step+" em "+step+". O "+odd+" sai.",shown.map(String));
+}
+function seqQ(level){ const styles=level===0?["next","next","hole","repeat"]:level===1?["next","hole","repeat","rule"]:["next","hole","rule","intruder","double"]; return sequence(pick(styles),level); }
+const doubleQ=(level)=>{ const n=level===0?ri(1,8):level===1?ri(3,12):ri(6,20); return q("Dobro","O dobro de "+n,String(n*2),"O dobro de "+n+" é "+(n*2)+".",numberChoices(n*2,4,6)); };
+const halfQ=(level)=>{ const n=(level===0?ri(1,8):level===1?ri(2,12):ri(4,18))*2; return q("Metade","A metade de "+n,String(n/2),"A metade de "+n+" é "+(n/2)+".",numberChoices(n/2,4,4)); };
+function placeQ(kind,level){ const tens=level===0?ri(1,4):ri(1,9); const ones=ri(0,9); const n=tens*10+ones; if(kind==="tens") return q("Dezenas","Quantas dezenas tem "+n+"?",String(tens),n+" tem "+tens+" dezenas.",numberChoices(tens,4,2)); return q("Unidades","Quantas unidades tem "+n+"?",String(ones),n+" tem "+ones+" unidades.",numberChoices(ones,4,3)); }
+function compareQ(level){ const low=level===0?1:10; const high=level===0?20:level===1?50:99; const nums=new Set(); while(nums.size<4) nums.add(ri(low,high)); const list=[...nums]; const bigger=Math.random()<.5; const answer=bigger?Math.max(...list):Math.min(...list); return q(bigger?"Maior":"Menor",bigger?"Qual é o maior?":"Qual é o menor?",String(answer),bigger?answer+" é o maior.":answer+" é o menor.",list.map(String)); }
+function missingQ(level){ const a=level===0?ri(1,9):ri(4,18); const b=level===0?ri(1,9):ri(3,16); if(Math.random()<.5) return q("Completar",a+" + ? = "+(a+b),String(b),a+" + "+b+" = "+(a+b),numberChoices(b,4,4)); return q("Completar",(a+b)+" − ? = "+a,String(b),(a+b)+" − "+b+" = "+a,numberChoices(b,4,4)); }
+function parityQ(level){ const n=level===0?ri(1,20):level===1?ri(10,50):ri(20,90); const even=n%2===0; return q("Par ou ímpar",n+" é...",even?"Par":"Ímpar",even?n+" é par.":n+" é ímpar.",["Par","Ímpar"]); }
+function storyQ(level){ const name=pick(NAMES), item=pick(ITEMS), roll=ri(0,3);
+  if(roll===0){ const a=level===0?ri(2,9):ri(6,20), b=level===0?ri(1,8):ri(3,15); return q("Historinha",name+" tem "+a+" "+item+" e ganha "+b+". Quantos ficam?",String(a+b),"Ficam "+(a+b)+".",numberChoices(a+b,4,5)); }
+  if(roll===1){ const a=level===0?ri(6,14):ri(12,30), b=ri(1,Math.min(8,a-1)); return q("Historinha",name+" tinha "+a+" "+item+" e deu "+b+". Quantos restam?",String(a-b),"Restam "+(a-b)+".",numberChoices(a-b,4,4)); }
+  if(roll===2){ const groups=level===0?ri(2,4):ri(2,5), each=level===0?ri(2,4):ri(2,6); return q("Historinha",groups+" caixas com "+each+" "+item+". Quantos no total?",String(groups*each),"São "+(groups*each)+".",numberChoices(groups*each,4,6)); }
+  const friends=pick([2,3,4,5]), each=level===0?ri(1,4):ri(2,6); return q("Historinha",(friends*each)+" "+item+" para "+friends+" amigos, iguais. Quantos cada um ganha?",String(each),"Cada um ganha "+each+".",numberChoices(each,4,3));
+}
+const MAKERS = { add:addQ, sub:subQ, mul:mulQ, div:divQ, next:nextQ, seq:seqQ, double:doubleQ, half:halfQ, tens:(l)=>placeQ("tens",l), ones:(l)=>placeQ("ones",l), compare:compareQ, story:storyQ, missing:missingQ, parity:parityQ };
+function makeRound(mode){ const pool=POOLS[mode]; const used=new Set(); return Array.from({length:10},(_,index)=>{ let kind=pick(pool); if(index<pool.length && used.has(kind)){ const fresh=pool.find(item=>!used.has(item)); if(fresh) kind=fresh; } used.add(kind); return MAKERS[kind](band(index)); }); }
+let ctx, musicGain, sfxGain, noise, started=false, nextTime=0, step=0, audioTimer=0;
