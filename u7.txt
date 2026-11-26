@@ -1,0 +1,23 @@
+  const sound = '<button class="iconbtn" onclick="toggleMusic()" aria-label="música">'+(state.music?"♪":"×")+'</button>';
+  if(state.phase==="home"){
+    app.innerHTML='<div class="row"><p class="chip">Recorde '+state.best+'</p>'+sound+'</div><div class="fox">🦊</div><h1>Trilha do Lico</h1><p class="muted" style="margin-top:.5rem;font-size:1.1rem">Contas para 7 e 8 anos</p><p class="muted" style="font-size:.9rem">10 perguntas · 3 vidas</p><div class="modes">'+MODES.map(([id,title,blurb,icon])=>'<button class="mode" onclick="begin(\''+id+'\')"><span class="badge">'+icon+'</span><span><b>'+title+'</b><span>'+blurb+'</span></span></button>').join("")+'</div>';
+    return;
+  }
+  if(state.phase==="play"){
+    const current=state.round[state.index];
+    const wordy=current.options.some(o=>o.length>6);
+    const long=current.prompt.length>28||current.options.length<3;
+    const moodClass=state.mood==="happy"?"hop":state.mood==="oops"?"wobble":"";
+    app.innerHTML='<div class="row"><div class="hearts">'+[0,1,2].map(i=>'<span style="color:'+(i<state.lives?"var(--coral)":"var(--line)")+'">♥</span>').join("")+'</div><p class="chip">★ '+state.score+(state.gain?' <i style="color:var(--teal)">+'+state.gain+'</i>':"")+'</p>'+sound+'</div><div class="dots">'+state.round.map((_,i)=>'<span class="dot '+(i<state.index?"done":i===state.index?"on":"")+'"></span>').join("")+'</div><div class="qhead"><div class="fox sm '+moodClass+'">'+face(state.mood)+'</div><p class="muted" style="text-align:right">'+(state.index+1)+' de 10'+(state.combo>=2?" · "+state.combo+" seguidos":"")+'</p></div><section class="card"><p class="label">'+esc(current.label)+'</p><h2 class="prompt '+(long?"long":"")+'">'+esc(current.prompt)+'</h2><p class="explain '+(state.pick&&state.pick!==current.answer?"bad":"")+'">'+(state.pick?esc(current.explain):"")+'</p></section><div class="grid '+(wordy||current.options.length<3?"":"two")+'">'+current.options.map((option)=>'<button class="opt '+(wordy?"wordy":"")+' '+(state.pick&&option===current.answer?"ok":"")+' '+(state.pick===option&&option!==current.answer?"no":"")+'" '+(state.pick?"disabled":"")+' onclick="choose('+JSON.stringify(option)+')">'+esc(option)+'</button>').join("")+'</div>';
+    return;
+  }
+  const title=state.lives<=0?"Quase!":state.stars>=9?"Arrasou!":state.stars>=6?"Muito bem!":"Boa trilha!";
+  const line=state.lives<=0?"As vidas acabaram. Vamos de novo.":state.stars>=9?"Lico está pulando de alegria.":"Cada conta deixa o Lico mais esperto.";
+  const modeTitle=(MODES.find(m=>m[0]===state.mode)||[])[1]||"Trilha";
+  app.innerHTML='<div class="end"><div class="fox hop">'+(state.stars>=6&&state.lives>0?"🦊":"😿")+'</div><h1>'+title+'</h1><p class="muted" style="margin-top:.4rem">'+line+'</p><p class="score">'+state.score+'</p><p class="muted">'+state.stars+' estrelas · '+modeTitle+(state.bestCombo>=2?" · "+state.bestCombo+" seguidos":"")+'</p><button class="act primary" onclick="begin(\''+state.mode+'\')">Jogar de novo</button><button class="act ghost" onclick="state.phase=\'home\';render()">Início</button></div>';
+}
+render();
+window.begin=begin; window.choose=choose; window.toggleMusic=toggleMusic;
+</script>
+</body>
+</html>
