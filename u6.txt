@@ -1,0 +1,24 @@
+const MELODY=[72,76,79,76,81,79,76,74,72,74,76,79,81,79,76,72];
+const BASS=[48,55,53,48];
+const midi=n=>440*2**((n-69)/12);
+function tone(freq,when,dur,type,bus,vol){ const osc=ctx.createOscillator(); const gain=ctx.createGain(); osc.type=type; osc.frequency.setValueAtTime(freq,when); const g=ctx.createGain(); g.gain.setValueAtTime(0.0001,when); g.gain.exponentialRampToValueAtTime(vol,when+0.02); g.gain.exponentialRampToValueAtTime(0.0001,when+dur); osc.connect(g); g.connect(bus); osc.start(when); osc.stop(when+dur+0.03); }
+function pump(){ if(!ctx||!started) return; while(nextTime<ctx.currentTime+0.28){ if(state.music){ tone(midi(MELODY[step%MELODY.length]),nextTime,0.22,"triangle",musicGain,0.85); if(step%4===0) tone(midi(BASS[(step/4)%BASS.length]),nextTime,0.5,"sine",musicGain,0.5); } nextTime+=0.28; step++; } audioTimer=setTimeout(pump,70); }
+function unlock(){ const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; if(!ctx){ ctx=new AC(); const master=ctx.createGain(); musicGain=ctx.createGain(); sfxGain=ctx.createGain(); musicGain.gain.value=0.085; sfxGain.gain.value=0.2; master.gain.value=1; musicGain.connect(master); sfxGain.connect(master); master.connect(ctx.destination); } if(ctx.state==="suspended") ctx.resume(); if(!started){ started=true; nextTime=ctx.currentTime+0.06; step=0; pump(); } }
+function playCorrect(combo){ if(!ctx) return; const now=ctx.currentTime; const base=523+Math.min(combo,6)*30; tone(base,now,0.12,"triangle",sfxGain,0.7); tone(base*1.25,now+0.09,0.16,"triangle",sfxGain,0.65); }
+function playWrong(){ if(ctx) tone(196,ctx.currentTime,0.22,"sine",sfxGain,0.45); }
+function playWin(){ if(!ctx) return; [523,659,784,1046].forEach((f,i)=>tone(f,ctx.currentTime+i*0.1,0.18,"triangle",sfxGain,0.55)); }
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible" && ctx && ctx.state==="suspended") ctx.resume(); });
+function persist(){ save={best:state.best,music:state.music}; localStorage.setItem(SAVE_KEY,JSON.stringify(save)); }
+function toggleMusic(){ state.music=!state.music; persist(); if(state.music) unlock(); render(); }
+function begin(mode){ unlock(); clearTimeout(state.timer); Object.assign(state,{phase:"play",mode,round:makeRound(mode),index:0,score:0,combo:0,bestCombo:0,lives:3,stars:0,pick:null,mood:"idle",gain:0}); render(); }
+function choose(option){ const current=state.round[state.index]; if(!current||state.pick) return; const ok=option===current.answer; const nextCombo=ok?state.combo+1:0; const gained=ok?10+(nextCombo>=3?nextCombo*2:0):0; const nextLives=ok?state.lives:state.lives-1; const nextScore=state.score+gained; const nextStars=state.stars+(ok?1:0); const finished=nextLives<=0||state.index>=state.round.length-1; state.pick=option; state.combo=nextCombo;
+  if(ok){ state.bestCombo=Math.max(state.bestCombo,nextCombo); state.score=nextScore; state.stars=nextStars; state.gain=gained; state.mood="happy"; playCorrect(nextCombo); }
+  else { state.lives=nextLives; state.mood="oops"; state.gain=0; playWrong(); }
+  render();
+  clearTimeout(state.timer);
+  state.timer=setTimeout(()=>{ if(finished){ if(nextScore>state.best){ state.best=nextScore; persist(); } if(nextStars>=7) playWin(); state.phase="end"; } else { state.index++; state.pick=null; state.mood="idle"; state.gain=0; } render(); }, ok?1050:1650);
+}
+function esc(s){return String(s).replace(/[&<>"]/g,(c)=>c==="&"?"&"+"amp;":c==="<"?"&"+"lt;":c===">"?"&"+"gt;":"&"+"quot;")}
+const face = (m) => m==="happy"?"🦊":m==="oops"?"😿":"🦊";
+function render(){
+  const app=document.getElementById("app");
