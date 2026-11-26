@@ -1,0 +1,24 @@
+  return shuffle([...set].slice(0,total).map(String));
+}
+function nearChoices(answer,seeds){
+  const set=new Set([answer]);
+  for (const seed of seeds) if (seed>=0 && seed!==answer) set.add(seed);
+  let extra=1; while (set.size<4){ const value=answer+extra; if (value>=0 && value!==answer) set.add(value); extra++; }
+  return shuffle([...set].slice(0,4).map(String));
+}
+const addQ = (level) => { const a=level===0?ri(1,12):level===1?ri(6,28):ri(12,48); const b=level===0?ri(1,12):level===1?ri(4,24):ri(8,40); const sum=a+b; return q("Adição",a+" + "+b+" = ?",String(sum),a+" + "+b+" = "+sum,numberChoices(sum,4,level===0?5:9)); };
+const subQ = (level) => { const a=level===0?ri(6,18):level===1?ri(14,40):ri(24,80); const b=ri(1,Math.max(1,a-1)); return q("Subtração",a+" − "+b+" = ?",String(a-b),a+" − "+b+" = "+(a-b),numberChoices(a-b,4,6)); };
+const mulQ = (level) => { const a=pick(level===0?[2,5,10]:level===1?[2,3,4,5,10]:[2,3,4,5,6,10]); const b=level===0?ri(1,5):ri(2,8); return q("Vezes",a+" × "+b+" = ?",String(a*b),a+" × "+b+" = "+(a*b),numberChoices(a*b,4,level===0?6:10)); };
+const divQ = (level) => { const d=pick(level===0?[2,5]:level===1?[2,3,4,5]:[2,3,4,5,6]); const quot=level===0?ri(1,5):ri(2,8); return q("Dividir",(d*quot)+" ÷ "+d+" = ?",String(quot),(d*quot)+" ÷ "+d+" = "+quot,numberChoices(quot,4,4)); };
+function nextQ(level){ const n=level===0?ri(2,20):level===1?ri(12,50):ri(30,90); if (Math.random()<.55) return q("Depois","O que vem depois de "+n+"?",String(n+1),"Depois de "+n+" vem "+(n+1)+".",numberChoices(n+1,4,3)); return q("Antes","O que vem antes de "+n+"?",String(n-1),"Antes de "+n+" vem "+(n-1)+".",numberChoices(n-1,4,3)); }
+function sequenceStep(level,up){ if(!up) return pick(level===0?[1,2]:[2,5,10]); return pick(level===0?[1,2,5,10]:level===1?[2,3,5,10]:[3,4,5,10]); }
+const ruleText=(step,up)=> up?"Sobe de "+step+" em "+step:"Desce de "+step+" em "+step;
+function ruleOptions(step,up){ const others=[1,2,3,5,10].filter(n=>n!==step); return [...new Set([ruleText(step,up),ruleText(step,!up),ruleText(others[0],up),ruleText(others[1]||4,up)])]; }
+function repeatSeq(level){ const a=ri(1,6); let b=ri(1,8); while(b===a) b=ri(1,8); if(level<2||Math.random()<.5) return q("Repete",a+", "+b+", "+a+", "+b+", ?",String(a),"Repete "+a+" e "+b+".",nearChoices(a,[b,a+1,b+1])); const c=[1,2,3,4,5,6].find(n=>n!==a&&n!==b)||3; return q("Repete",a+", "+b+", "+c+", "+a+", "+b+", ?",String(c),"Repete "+a+", "+b+", "+c+".",nearChoices(c,[a,b,c+1])); }
+function doubleSeq(){ const start=pick([1,2,3]); const answer=start*8; return q("Dobra",start+", "+(start*2)+", "+(start*4)+", ?",String(answer),"Dobra a cada passo.",nearChoices(answer,[answer+start,answer/2,answer+2])); }
+function sequence(style,level){
+  if(style==="repeat") return repeatSeq(level);
+  if(style==="double") return doubleSeq();
+  const up = style==="next" ? Math.random()<(level===0?.75:.6) : Math.random()<.7;
+  const step=sequenceStep(level,up);
+  const start = up ? (level===0?ri(1,10):ri(2,18)) : ri(step*3+2, step*3+(level===0?12:24));
